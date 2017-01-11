@@ -9,7 +9,6 @@ dictnew=load('traineddict.mat');
 dict=dictnew.dict;
 s=8;
  %im=imagecrop(imtest,BW,ims,edge);
-%%
 
 %%
 sizeim=size(im);
