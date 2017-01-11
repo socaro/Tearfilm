@@ -9,10 +9,10 @@ function dict = dictlearn(traindata, s, iteration,mpiteration)
     %Output:
     %dict           - learned dictionary
 
-    %L=7*s^2
-    %u=rand([s^2 L]); %using a randomly initialized dictionary
-    u=wmpdictionary(s^2,'lstcpt',{{'haar',2},{'haar',2},{'haar',2},{'haar',2}}); %using a set of level 5 Haar wavelets as dicitonary
-    L=length(u(1,:));
+    L=7*s^2;
+    u=rand([s^2 L]); %using a randomly initialized dictionary
+    %u=wmpdictionary(s^2,'lstcpt',{{'haar',2},{'haar',2},{'haar',2},{'haar',2}}); %using a set of level 5 Haar wavelets as dicitonary
+    %L=length(u(1,:));
     u_new=u;
     [M,N]=size(traindata);
     traindata_mean=zeros(size(traindata));
@@ -25,7 +25,6 @@ function dict = dictlearn(traindata, s, iteration,mpiteration)
         for n=1:N
             [~,~,COEFF,IOPT]=wmpalg('BMP',traindata(:,n),u,'itermax',mpiteration);%'maxerr',{'L2',sigma*100});
             z_new(IOPT,n)=COEFF;
-            [i,n]
         end
         for l=1:L
            u_temp=u;
@@ -34,7 +33,6 @@ function dict = dictlearn(traindata, s, iteration,mpiteration)
            R_l=traindata-Rt_l;
            [U,~,~]=svd(R_l,'econ');
            u_new(:,l)=U(:,1);
-           [i,l]
         end 
         u=u_new;
     end
