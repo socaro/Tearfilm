@@ -10,4 +10,4 @@ for i=1:length(images)
     traindata=[traindata imcol];
 end
 dict=dictlearn(traindata,s,50,10);
-save('learneddict.m',dict);
+save('learneddict.m','dict');
