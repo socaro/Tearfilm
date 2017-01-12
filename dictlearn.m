@@ -22,18 +22,25 @@ function dict = dictlearn(traindata, s, iteration,mpiteration)
     traindata=traindata-traindata_mean;
     for i=1:iteration
         z_new=zeros(L,N);
+        tic;
         for n=1:N
             [~,~,COEFF,IOPT]=wmpalg('BMP',traindata(:,n),u,'itermax',mpiteration);%'maxerr',{'L2',sigma*100});
             z_new(IOPT,n)=COEFF;
         end
+        toc;
         for l=1:L
            u_temp=u;
            u_temp(:,l)=zeros(s^2,1);
            Rt_l=u_temp*z_new;
            R_l=traindata-Rt_l;
-           [U,~,~]=svd(R_l,'econ');
-           u_new(:,l)=U(:,1);
-	   disp(sprintf('i: %d, l: %d\n',i,l));
+%            tic;
+%            [U,~,~]=svd(R_l,'econ');
+%            toc;
+           tic;
+           [U1,~]=eig(R_l*ctranspose(R_l));
+           toc;
+           u_new(:,l)=-U1(:,64);
+	       disp(fprintf('i: %d, l: %d\n',i,l));
         end 
         u=u_new;
     end

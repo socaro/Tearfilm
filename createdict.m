@@ -2,7 +2,7 @@ clear all;
 close all;
 clc;
 images=dir('traindata/*.tif');
-s=8;
+s=16;
 traindata=[];
 for i=1:length(images)
     image=imread(fullfile('traindata',images(i).name));
