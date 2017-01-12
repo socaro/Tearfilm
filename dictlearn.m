@@ -14,12 +14,15 @@ function dict = dictlearn(traindata, s, iteration,mpiteration)
     %u=wmpdictionary(s^2,'lstcpt',{{'haar',2},{'haar',2},{'haar',2},{'haar',2}}); %using a set of level 5 Haar wavelets as dicitonary
     %L=length(u(1,:));
     u_new=u;
-    [M,N]=size(traindata);
-    traindata_mean=zeros(size(traindata));
+    [~,N]=size(traindata);
+%     traindata_mean=zeros(size(traindata));
+%     for n=1:N
+%         traindata_mean(:,n)=sum(traindata(:,n))/length(traindata(:,n))*ones(size(traindata(:,n)));
+%     end
+%     traindata=traindata-traindata_mean;
     for n=1:N
-        traindata_mean(:,n)=sum(traindata(:,n))/length(traindata(:,n))*ones(size(traindata(:,n)));
+        traindata(:,n)=traindata(:,n)-mean(traindata(:,n));
     end
-    traindata=traindata-traindata_mean;
     for i=1:iteration
         z_new=zeros(L,N);
         tic;
@@ -28,6 +31,7 @@ function dict = dictlearn(traindata, s, iteration,mpiteration)
             z_new(IOPT,n)=COEFF;
         end
         toc;
+        tic;
         for l=1:L
            u_temp=u;
            u_temp(:,l)=zeros(s^2,1);
@@ -36,12 +40,12 @@ function dict = dictlearn(traindata, s, iteration,mpiteration)
 %            tic;
 %            [U,~,~]=svd(R_l,'econ');
 %            toc;
-           tic;
            [U1,~]=eig(R_l*ctranspose(R_l));
-           toc;
            u_new(:,l)=-U1(:,64);
-	       disp(fprintf('i: %d, l: %d\n',i,l));
+	       %disp(fprintf('i: %d, l: %d\n',i,l));
         end 
+        toc;
+        i
         u=u_new;
     end
     dict=u_new;
