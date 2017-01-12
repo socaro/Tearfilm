@@ -33,6 +33,7 @@ function dict = dictlearn(traindata, s, iteration,mpiteration)
            R_l=traindata-Rt_l;
            [U,~,~]=svd(R_l,'econ');
            u_new(:,l)=U(:,1);
+	   disp(sprintf('i: %d, l: %d\n',i,l));
         end 
         u=u_new;
     end
