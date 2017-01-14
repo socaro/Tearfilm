@@ -18,8 +18,7 @@ end
 toc;
 for i=1:3
 dict(:,:,i)=dictlearn(traindata{i},s,50,10);
-dim=size(dict(:,:,i));
-imagedict=col2im(dict(:,:,i),[s s],[s^2*3 s^2*2],'distinct');
-imshow(imagedict);
+imagedict=col2im(dict(:,:,i),[s s],size(dict),'distinct');
+imshow(imagedict,'InitialMagnification','fit');
 end
-save('learneddicttest.mat','dict');
+save('dictwaveapprox.mat','dict');
