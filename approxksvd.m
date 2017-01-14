@@ -1,4 +1,4 @@
-function dict = dictlearn(traindata, s, iteration,mpiteration)
+function dict = approxksvd(traindata, s, iteration,mpiteration)
     %%SVD algorithm to train a dictionary using input traindata
     %Input:
     %traindata      - matrix containing one image patch [s s] per column, thus has
@@ -10,14 +10,14 @@ function dict = dictlearn(traindata, s, iteration,mpiteration)
     %dict           - learned dictionary
 
     %L=6*s^2;
-    %u=rand([s^2 6*s^2]); %using a randomly initialized dictionary
-    u=wmpdictionary(s^2,'lstcpt',{{'haar',2},{'sym4',5},{'wpsym4',5},'dct','sin'});
+    u=rand([s^2 6*s^2]); %using a randomly initialized dictionary
     %u=wmpdictionary(s^2,'lstcpt',{{'haar',2},{'haar',2},{'haar',2},{'haar',2}}); %using a set of level 5 Haar wavelets as dicitonary
+    %u=wmpdictionary(s^2,'lstcpt',{{'haar',2},{'sym4',5},{'wpsym4',5},'dct','sin'});
+
     u=full(u);
     imagedict=col2im(u,[s s],size(u),'distinct');
     figure;imshow(imagedict);
     L=length(u(1,:));
-    u_new=u;
     [~,N]=size(traindata);
 %     traindata_mean=zeros(size(traindata));
 %     for n=1:N
@@ -43,23 +43,23 @@ function dict = dictlearn(traindata, s, iteration,mpiteration)
         close;
         tic;
         for l=1:L
-           u_temp=u;
-           u_temp(:,l)=zeros(s^2,1);
-           Rt_l=u_temp*z_new;
-           R_l=traindata-Rt_l;
-%            tic;
-           [U,~,~]=svd(R_l,'econ');
-           u_new(:,l)=U(:,1);
-%            toc;
-           %[U1,~]=eig(R_l*ctranspose(R_l));
-           %u_new(:,l)=-U1(:,length(U1(1,:)));
+           I=find(z_new(l,:));
+           u(:,l)=zeros(s^2,1);
+           g=z_new(l,I)';
+           R=traindata(:,I)-u*z_new(:,I);
+           d=R*g/norm(R*g);
+           %d=traindata(:,I)*g-(u*z_new(:,I))*g;
+           %d=d/norm(d);
+           %g=traindata(:,I)'*d-(u*z_new(:,I))'*d;
+           g=R'*d;
+           u(:,l)=d;
+           z_new(l,I)=g';
 	       %disp(fprintf('i: %d, l: %d\n',i,l));
         end 
         toc;
         i
-        u=u_new;
         imagedict=col2im(u,[s s],size(u),'distinct');
         figure;imshow(imagedict);
     end
-    dict=u_new;
+    dict=u;
 end
