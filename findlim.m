@@ -1,6 +1,6 @@
 function [lim] = findlim(image, limlow, limhigh)
-if max(image)>1
-    image=image./256;
+if max(image(:))<=1
+    image=image*256;
 end
 for i=1:3
     [x,y]=imhist(image(:,:,i));
@@ -11,5 +11,5 @@ for i=1:3
     lowinrgb(i)=y(indlow);
     lowoutrgb(i)=y(indhigh);
 end
-lim=[min(lowinrgb);max(lowoutrgb)];
+lim=[min(lowinrgb);max(lowoutrgb)]./256;
 end
