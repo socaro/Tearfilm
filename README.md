@@ -11,6 +11,12 @@ align_video.m	                Align videos to correct for eye movement
    | usedict.m              | Function for dictionary denoising (to be used with blockproc in filter_video) |
    | matching_pursuit.m	    | Matching pursuit algorithm to be used in dictlearn, approxksvd and usedict |
    | traineddict.mat	       | Example for trained dictionary |
+   
+|   |   |   |   |   |
+|---|---|---|---|---|
+|   |   |   |   |   |
+|   |   |   |   |   |
+|   |   |   |   |   |
 
   * func_denoise_sw2d.m           Function for wavelet denoising exported from toolbox (doesn't work well with constant parameters) 
 
