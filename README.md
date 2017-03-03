@@ -4,7 +4,7 @@
 align_video.m	                Align videos to correct for eye movement
 
 ## denoising using learned dictionary ##
-filter_video.m                Filter video using learned dictionary//
+filter_video.m                Filter video using learned dictionary;
 createdict.m	                Creates dictionary using traindata and either approxksvd.m or dictlearn.m
 approxksvd.m	                Function to learn dictionary using createdict.m (approximate KSVD algorithm)
 dictlearn.m                   Function to train dictionary using createdict.m (KSVD algorithm)
