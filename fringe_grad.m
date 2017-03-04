@@ -8,7 +8,7 @@ clc;
 colormap=load('colormap.mat');
 cm=colormap.colormap;
 %% load image and crop do smaller size
-im=imread('Image_denoised_contrast.tif');
+im=imread('image_denoised_contrast.tif');
 imcr=double(imcrop(im));
 close;
 %% scale colormap intensity according to image
@@ -32,14 +32,26 @@ p_minima=find_p(-imcr);
 imred=im_scale_grad(imcr,1);
 
 %% determine position in colormap for peak n - test different search algorithms
-n=2; % peak nr
+n=10; % peak nr
 loc=[row_max(n),col_max(n)]; % peak location in image
 rgbred=squeeze(imred(row_max(n),col_max(n),1:3)).'; % scaled rgb at loc
 rgb=squeeze(imcr(row_max(n),col_max(n),1:3)).'; % unscaled rgb at loc
 d=dsearchn(cmred(100:300,1:3),rgbred(1:3))+99; % test dsearchn
-[d1,dist]=knnsearch(cmred(100:300,1:3),rgbred(1:3),'K',4,'Distance','correlation'); %test knnsearch with scaled rgb
-[d2,dist2]=knnsearch(cm_sparse(100:230,1:3),rgb(1:3),'K',4,'Distance','seuclidean'); %test knnsearch with unscaled rgb
+[d1,dist]=knnsearch(cmred(100:300,1:3),rgbred(1:3),'K',10,'Distance','correlation'); %test knnsearch with scaled rgb
+[d2,dist2]=knnsearch(cm_sparse(100:230,1:3),rgb(1:3),'K',10,'Distance','seuclidean'); %test knnsearch with unscaled rgb
+[d3,dist3]=knnsearch(cm_sparse(100:230,1:3),rgb(1:3),'K',10,'Distance','mahalanobis'); %test knnsearch with unscaled rgb
+[d4,dist4]=knnsearch(cm_sparse(100:230,1:3),rgb(1:3),'K',10,'Distance','correlation'); %test knnsearch with unscaled rgb
 
+% cimycbcr=rgb2ycbcr(cim);
+% cmycbcr=cm_ycbcr_spares(cm,1);
+% imycbcr=rgb2ycbcr(imcr);
+% ycbcr=squeeze(imycbcr(row_max(n),col_max(n),1:3)).';
+% ycbcr_m = find_rgb(imycbcr,row_max(n),col_max(n));
+% [d3,dist3]=knnsearch(squeeze(cimycbcr(100:230,1,2:3)),ycbcr(2:3),'K',10,'Distance','mahalanobis');
+% [d4,dist4]=knnsearch(squeeze(cmycbcr(100:230,2:3)),ycbcr(2:3),'K',10,'Distance','mahalanobis');
+% for i=1:length(cm(:,1))
+% d3(i) = mahal(rgbycbcr(2:3).',squeeze(cimycbcr(i,1,2:3)));
+% end
 
 %% plot one column in image and colormap for comparison
 %figure;plot([smooth(imcr(:,9,1)) smooth(imcr(:,9,2)), smooth(imcr(:,9,3))])
@@ -47,6 +59,7 @@ d=dsearchn(cmred(100:300,1:3),rgbred(1:3))+99; % test dsearchn
 
 function rgb = find_rgb(im,row,col)
 counter = 0;
+rgb=zeros(1,3);
 for i=-2:2
     for j=-2:2
         rgb=rgb+squeeze(im(row+i,col+j,1:3)).';
@@ -54,6 +67,15 @@ for i=-2:2
     end
 end
 rgb=rgb./counter;
+end
+
+function cmycbcr = cm_ycbcr_spares(cm,i)
+[~,locs]=findpeaks(cm(:,i));
+locs1=[locs;locs+1;locs+2;locs+3;locs-1;locs-2;locs-3];
+locs1=sort(locs1);
+cmycbcr=zeros(size(cm));
+cm=rgb2ycbcr(cm);
+cmycbcr(locs1,:)=cm(locs1,:);
 end
 
 function peaks=find_p(imcr)
