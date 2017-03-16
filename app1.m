@@ -59,16 +59,27 @@ sizeim=size(handles.im);
 handles.fringes=cell(0);
 handles.fringeselect=cell(0);
 handles.fringe=zeros(sizeim(1),sizeim(2));
+axes(handles.axes3);
+imshow(handles.fringe);
+
 handles.dispthickness=zeros(size(handles.fringe));
 handles.imc=add_coord(handles.im);
 axes(handles.axes1);
 imshow(handles.im);
 set(handles.col_select,'Enable','off');
 
-[handles.cim,handles.cm]=gen_cim();
-%axes(handles.axes2);
-imshow(handles.cim,'Parent',handles.axes2);
+handles.initial_color=zeros(100,100,3);
+axes(handles.axes4);
+imshow(handles.initial_color);
 
+[handles.cim,handles.cm]=gen_cim();
+axes(handles.axes2);
+imshow(handles.cim);
+cimlabel=ones(length(handles.cim(:,1,1))*10,2);
+%[cim1,~]=gen_cim(1);
+axes(handles.axes5);
+imshow(cimlabel)
+axis on;
 
 % Choose default command line output for app1
 handles.output = hObject;
@@ -115,20 +126,21 @@ f=handles.current_fringe_nr;
 set(handles.text2,'String','pick color');
 axes(handles.axes2);
 [~,y,color]=impixel(handles.cim);
-handles.fringes{f}.thickness=y*10;
+handles.fringes{f}.thickness=(y-1)*10;
 imcolor=zeros(100,100,3);
 for i=1:3;imcolor(:,:,i)=color(i);end
-handles.fringes{i}.color=imcolor;
+handles.fringes{f}.color=imcolor;
 axes(handles.axes4);
 imshow(uint8(handles.fringes{f}.color));
 set(handles.text4,'String',sprintf('Fringe Thickness: \n %d nm',handles.fringes{f}.thickness));
 guidata(hObject,handles);
 
-% --- Executes on button press in points.
+% --- Executes on button press in points (select points for current fringe)
 function points_Callback(hObject, eventdata, handles)
 % hObject    handle to points (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+try 
 f=handles.current_fringe_nr;
 axes(handles.axes1);
 [c,r,~]=impixel(handles.im);
@@ -138,10 +150,13 @@ handles.fringe(handles.fringe==2)=1;
 axes(handles.axes3);
 imshow(handles.fringes{f}.fringe);
 set(handles.col_select,'Enable','off');
+catch 
+    h=msgbox('Make sure that you have selected a color');
+end 
 guidata(hObject,handles);
 
 
-% --- Executes on button press in plot_fringe.
+% --- Executes on button press in plot_fringe (plot all fringes).
 function plot_fringe_Callback(hObject, eventdata, handles)
 % hObject    handle to plot_fringe (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -170,15 +185,26 @@ axis([0 sizeim(1) 0 sizeim(2) 0 4000]);
 rotate3d on
 
 
-function [cim,cm] = gen_cim()
+function [cim,cm] = gen_cim(dummy)
+    if nargin<1
 colormap=load('colormap.mat');
 cm=colormap.colormap;
-for i=1:100
+for i=1:70
 cim(:,i,:)=cm;
 end
 lowin=min(cim(:));
 lowout=max(cim(:));
 cim=uint8(imadjust(cim,[lowin; lowout],[0; 1]).*256);
+    else
+colormap=load('colormapfull.mat');
+cm=colormap.colormap;
+for i=1:2
+cim(:,i,:)=cm;
+end
+lowin=min(cim(:));
+lowout=max(cim(:));
+cim=uint8(imadjust(cim,[lowin; lowout],[0; 1]).*256);
+    end
 
 
 
@@ -268,7 +294,6 @@ function plot_current_fringe_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 f=handles.current_fringe_nr;
 axes(handles.axes3);
-
 imshow(handles.fringes{f}.fringe);
 
 % Hints: contents = cellstr(get(hObject,'String')) returns plot_current_fringe contents as cell array
@@ -296,13 +321,21 @@ function add_fringe_Callback(hObject, eventdata, handles)
 f=length(handles.fringes)+1;
 handles.fringes{f}=Fringe;
 handles.fringes{f}.fringe=zeros(size(handles.fringe));
+
 handles.fringeselect{f}=sprintf('Fringe %d',f');
 set(handles.current_fringe,'String',handles.fringeselect);
+set(handles.current_fringe,'Value',f);
+
 set(handles.col_select,'Enable','on');
 set(handles.text4,'String',sprintf('Fringe Thickness: select'));
+
+axes(handles.axes4);
+imshow(handles.initial_color);
+
 handles.current_fringe_nr=f;
 axes(handles.axes3);
 imshow(handles.fringes{f}.fringe);
+
 guidata(hObject,handles);
 
 
@@ -315,8 +348,9 @@ function clear_fringe_Callback(hObject, eventdata, handles)
 f=handles.current_fringe_nr;
 handles.fringe=handles.fringe-handles.fringes{f}.fringe;
 handles.fringes{f}=Fringe;
+handles.fringes{f}.fringe=zeros(size(handles.fringe));
 axes(handles.axes3);
-imshow(handles.fringe);
+imshow(handles.fringes{f}.fringe);
 set(handles.col_select,'Enable','on');
 
 guidata(hObject,handles);
@@ -328,10 +362,16 @@ function current_fringe_Callback(hObject, eventdata, handles)
 % hObject    handle to current_fringe (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-handles.current_fringe_nr=get(hObject,'Value');
+f=get(hObject,'Value');
+handles.current_fringe_nr=f;
+
 axes(handles.axes4);
 imshow(uint8(handles.fringes{f}.color));
+
 set(handles.text4,'String',sprintf('Fringe Thickness: \n %d nm',handles.fringes{f}.thickness));
+axes(handles.axes3);
+imshow(handles.fringes{f}.fringe);
+
 guidata(hObject,handles);
 % Hints: contents = cellstr(get(hObject,'String')) returns current_fringe contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from current_fringe
