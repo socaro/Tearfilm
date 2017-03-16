@@ -116,10 +116,11 @@ set(handles.text2,'String','pick color');
 axes(handles.axes2);
 [~,y,color]=impixel(handles.cim);
 handles.fringes{f}.thickness=y*10;
-handles.color=zeros(100,100,3);
-for i=1:3;handles.color(:,:,i)=color(i);end
+imcolor=zeros(100,100,3);
+for i=1:3;imcolor(:,:,i)=color(i);end
+handles.fringes{i}.color=imcolor;
 axes(handles.axes4);
-imshow(uint8(handles.color));
+imshow(uint8(handles.fringes{f}.color));
 set(handles.text4,'String',sprintf('Fringe Thickness: \n %d nm',handles.fringes{f}.thickness));
 guidata(hObject,handles);
 
@@ -267,6 +268,7 @@ function plot_current_fringe_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 f=handles.current_fringe_nr;
 axes(handles.axes3);
+
 imshow(handles.fringes{f}.fringe);
 
 % Hints: contents = cellstr(get(hObject,'String')) returns plot_current_fringe contents as cell array
@@ -326,7 +328,9 @@ function current_fringe_Callback(hObject, eventdata, handles)
 % hObject    handle to current_fringe (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-handles.current_fringe_nr=contents{get(hObject,'Value')};
+handles.current_fringe_nr=get(hObject,'Value');
+axes(handles.axes4);
+imshow(uint8(handles.fringes{f}.color));
 set(handles.text4,'String',sprintf('Fringe Thickness: \n %d nm',handles.fringes{f}.thickness));
 guidata(hObject,handles);
 % Hints: contents = cellstr(get(hObject,'String')) returns current_fringe contents as cell array
