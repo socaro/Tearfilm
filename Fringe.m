@@ -4,6 +4,8 @@ classdef Fringe
        dispthickness=0;
        fringe
        startpoints
+       color
+       dispfringe;
    end
    
 end

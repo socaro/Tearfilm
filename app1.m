@@ -25,7 +25,7 @@ function varargout = app1(varargin)
 
 % Edit the above text to modify the response to help app1
 
-% Last Modified by GUIDE v2.5 15-Mar-2017 15:01:46
+% Last Modified by GUIDE v2.5 24-Mar-2017 13:24:12
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -56,28 +56,26 @@ function app1_OpeningFcn(hObject, eventdata, handles, varargin)
 % varargin   command line arguments to app1 (see VARARGIN)
 
 %%initialize data structures and load image
-handles.im=imread('im_d/Sophie0131-1426-d-cr.tif');     %read image
-handles.imc=add_coord(handles.im);                      %add coordinates to image and transform to L*a*b space
-sizeim=size(handles.im);                                %determine size of image
+
 handles.fringes=cell(0);                                %initialize fringes as cell array for all future fringes
 handles.fringeselect=cell(0);                           %create cell array to save string for popupmenu for fringe selection
-handles.fringe=zeros(sizeim(1),sizeim(2));              %initialize sum of fringes
-handles.dispthickness=zeros(size(handles.fringe));      %initialize thickness plot
 handles.initial_color=zeros(100,100,3);                 %initialize image for current color
 [handles.cim,handles.cm]=gen_cim();                     %generate colormap
 cimlabel=ones(length(handles.cim(:,1,1))*10,2);         %create label for reference colormap
 
 set(handles.col_select,'Enable','off');                 %disable Color Select button until fringe is added
+set(handles.points,'Enable','off');
+set(handles.plot,'Enable','off');
+set(handles.plot_fringe,'Enable','off');
+set(handles.plot_current_fringe,'Enable','off');
+set(handles.add_fringe,'Enable','off');
+set(handles.clear_fringe,'Enable','off');
+set(handles.current_fringe,'Enable','off');
 
 %%display all initial images on axes
-axes(handles.axes1);
-imshow(handles.im);
 
 axes(handles.axes2);
 imshow(handles.cim);
-
-axes(handles.axes3);
-imshow(handles.fringe);
 
 axes(handles.axes4);
 imshow(handles.initial_color);
@@ -94,6 +92,62 @@ guidata(hObject, handles);
 
 % UIWAIT makes app1 wait for user response (see UIRESUME)
 uiwait(handles.figure1);
+
+
+% --- Executes on button press in openim.
+function openim_Callback(hObject, eventdata, handles)
+% hObject    handle to openim (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+[imname,pathname]=uigetfile('*.tif','Select Image');
+handles.im=imread(fullfile(pathname,imname));                              %read image
+handles.imc=add_coord(handles.im);                      %add coordinates to image and transform to L*a*b space
+sizeim=size(handles.im);                                %determine size of image
+
+handles.fringe=zeros(sizeim(1),sizeim(2));              %initialize sum of fringes
+handles.dispthickness=zeros(size(handles.fringe));      %initialize thickness plot
+handles.dispfringe=uint8(zeros(sizeim));                       %initialize display of fringes
+
+axes(handles.axes1);
+imshow(handles.im);
+
+axes(handles.axes3);
+imshow(handles.fringe);
+
+set(handles.points,'Enable','on');
+set(handles.plot,'Enable','on');
+set(handles.plot_fringe,'Enable','on');
+set(handles.plot_current_fringe,'Enable','on');
+set(handles.add_fringe,'Enable','on');
+set(handles.clear_fringe,'Enable','on');
+set(handles.current_fringe,'Enable','on');
+
+guidata(hObject,handles);
+
+% --- Executes on button press in save.
+function save_Callback(hObject, eventdata, handles)
+% hObject    handle to save (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+try
+[filename,pathname]=uiputfile('*.png','Save Thickness Plot as');
+%regenerate original thickness plot for consistency
+axes(handles.axes3);
+handles.save_t=surf(handles.thickness_plot,'LineStyle','none');
+sizeim=size(handles.im);
+axis([0 sizeim(1) 0 sizeim(2) 0 4000]);                 %set axis
+rotate(handles.save_t,[0 0 1],270);
+rotate3d on                                             %allow rotation
+%grab image of plot
+save_t=getframe(handles.axes3);
+save_t=frame2im(save_t);
+imwrite(save_t,fullfile(pathname,filename));
+%print(handles.axes3,fullfile(pathname,filename),'-dpng');
+catch
+    h=msgbox('Make sure that you have generated a thickness plot!');
+end
+    
+
 
 
 % --- Executes on button press in Select Color.
@@ -130,11 +184,16 @@ axes(handles.axes1);
 [c,r,~]=impixel(handles.im);
 %%find color region
 [handles.fringes{f}.fringe,handles.fringes{f}.dispthickness]=cluster_fringe(handles,r,c,f);
+for i=1:3;fringe_mask(:,:,i)=handles.fringes{f}.fringe;end
+handles.fringes{f}.dispfringe=handles.im;                %create mask for fringe display
+handles.fringes{f}.dispfringe(fringe_mask==0)=0;         %create image for displaying fringe
 handles.fringe=handles.fringe+handles.fringes{f}.fringe; %add current fringe to image of all fringes (for plot all fringes)
+handles.dispfringe(fringe_mask~=0)=0;
+handles.dispfringe=handles.dispfringe+handles.fringes{f}.dispfringe;
 handles.fringe(handles.fringe==2)=1;                     %set points reselected to one
 %%display selected fringe
 axes(handles.axes3);
-imshow(handles.fringes{f}.fringe);
+imshow(handles.fringes{f}.dispfringe);
 %%disable Color Select button (so that color cannot be changed once points
 %%have been selected)
 set(handles.col_select,'Enable','off');
@@ -149,7 +208,7 @@ function plot_fringe_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 axes(handles.axes3);
-imshow(handles.fringe);
+imshow(handles.dispfringe);
 
 % --- Executes on button press in plots (plot Thickness)
 function plot_Callback(hObject, eventdata, handles)
@@ -169,10 +228,13 @@ cq=1:1:length(handles.dispthickness(1,:));
 handles.thickness_plot=griddata(r,c,v,rq,cq,'cubic');  %interpolate using nonzero entries for grid
 %%display thickness
 axes(handles.axes3);
-surf(handles.thickness_plot,'LineStyle','none');
+handles.save_t=surf(handles.thickness_plot,'LineStyle','none');
 sizeim=size(handles.im);
 axis([0 sizeim(1) 0 sizeim(2) 0 4000]);                 %set axis
+rotate(handles.save_t,[0 0 1],270);
 rotate3d on                                             %allow rotation
+
+guidata(hObject,handles);
 
 % --- Executes on selection change in plot_current_fringe (Displays pixels
 % in current fringe)
@@ -182,22 +244,11 @@ function plot_current_fringe_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 f=handles.current_fringe_nr;
 axes(handles.axes3);
-imshow(handles.fringes{f}.fringe);
+imshow(handles.fringes{f}.dispfringe);
 % Hints: contents = cellstr(get(hObject,'String')) returns plot_current_fringe contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from plot_current_fringe
 
 
-% --- Executes during object creation, after setting all properties.
-function plot_current_fringe_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to plot_current_fringe (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
 
 % --- Executes on button press in add_fringe (create new fringe)
 function add_fringe_Callback(hObject, eventdata, handles)
@@ -206,7 +257,8 @@ function add_fringe_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 f=length(handles.fringes)+1; %new length of fringe list and index of new fringe
 handles.fringes{f}=Fringe;   %create fringe as struct from class Fringe
-handles.fringes{f}.fringe=zeros(size(handles.fringe %initialize matrix to store current fringe pixels
+handles.fringes{f}.fringe=zeros(size(handles.fringe)); %initialize matrix to store current fringe pixels
+handles.fringes{f}.dispfringe=uint8(zeros(size(handles.im))); %initialize image for display of current fringe
 %%update popup menu for fringe selection
 handles.fringeselect{f}=sprintf('Fringe %d',f');
 set(handles.current_fringe,'String',handles.fringeselect);
@@ -221,7 +273,7 @@ imshow(handles.initial_color);
 handles.current_fringe_nr=f;
 %%display current fringe points (i.e no points)
 axes(handles.axes3);
-imshow(handles.fringes{f}.fringe);
+imshow(handles.fringes{f}.dispfringe);
 
 guidata(hObject,handles);
 
@@ -233,9 +285,11 @@ function clear_fringe_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 f=handles.current_fringe_nr;
 handles.fringe=handles.fringe-handles.fringes{f}.fringe; %delete current fringe points from the total of fringes
+handles.dispfringe=handles.dispfringe-handles.fringes{f}.dispfringe; %delete current fringe colors from display of fringes;
 %%set current fringe to initial state
 handles.fringes{f}=Fringe;    
 handles.fringes{f}.fringe=zeros(size(handles.fringe));
+handles.fringes{f}.dispfringe=uint8(zeros(size(handles.im))); %initialize image for display of current fringe
 %%display initial state of fringe
 axes(handles.axes3);
 imshow(handles.fringes{f}.fringe);
@@ -258,7 +312,7 @@ imshow(uint8(handles.fringes{f}.color));
 
 set(handles.text4,'String',sprintf('Fringe Thickness: \n %d nm',handles.fringes{f}.thickness));
 axes(handles.axes3);
-imshow(handles.fringes{f}.fringe);
+imshow(handles.fringes{f}.dispfringe);
 
 guidata(hObject,handles);
 % Hints: contents = cellstr(get(hObject,'String')) returns current_fringe contents as cell array
@@ -377,4 +431,3 @@ function [this_search,fringe]=block_search(pos,fringe,dist_thresh,ab,s,handles)
              end
          end
    
-
