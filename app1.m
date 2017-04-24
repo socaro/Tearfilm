@@ -364,6 +364,8 @@ function [fringe_n,dispthickness_n]=cluster_fringe(handles,r,c,f)
 %%ouput: fringe_n = binary mask of all selected points, disp_thickness =
 %%matrix with selected thickness for all points in fringe_n
 s=3;                                            %block size
+limit=1000;                                     %limit number of points possible
+
 sizeim=size(handles.imc);
 fringe_n=handles.fringes{f}.fringe;             %grab current fringe
 %%determine distance threshold and starting pixel for selected pixels
@@ -375,13 +377,15 @@ for c=1:length(pos(:,1))
     current_search=[pos(c,1),pos(c,2)];                 %intialize current search from starting pixel
     ab=squeeze(handles.imc(pos(c,1),pos(c,2),2:3)).';   %get a*b values of starting pixel
     search=1;
+    counter=0; 
 %%search until current_search is empty
 while search==1
     new_search=[];                                      %intialize array of pixels to search for in next step
-    if ~isempty(current_search)
+    if ~isempty(current_search)&&counter<limit
         for i=1:length(current_search(:,1))
         [this_search,fringe_n]=block_search(current_search(i,:),fringe_n,dist_thresh(c),ab,s,handles); %search within vicinity of pixel for more pixels within distance threshold of a*b of starting pixel
         new_search=[new_search;this_search];            %add pixels to new search
+        counter=counter+1;
         end
     else
         search=0;
